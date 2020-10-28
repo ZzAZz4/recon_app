@@ -1,5 +1,5 @@
 # recon_app
-Proyecto de PI2
+PI2
 
 # usage:
 
