@@ -1,7 +1,6 @@
 if __name__ == "__main__":
     from kivy.app import App
     from kivy import utils
-
     # -- This import can be done in kv lang or python
 
     class MainApp(App):

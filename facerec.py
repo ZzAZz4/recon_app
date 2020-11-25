@@ -1,147 +1,102 @@
 import face_recognition
 import cv2
-from multiprocessing import Process, Manager, cpu_count, set_start_method
-import time
-import numpy
-import threading
-import platform
+import numpy as np
+import os
 
-
-def next_id(current_id, worker_num):
-    return 1 if current_id == worker_num else current_id + 1
-
-
-def prev_id(current_id, worker_num):
-    return worker_num if current_id == 1 else current_id - 1
-
-
-def capture(read_frame_list, Global, worker_num):
+def procedure():
     video_capture = cv2.VideoCapture(0)
-    print("Width: %d, Height: %d, FPS: %d" % (video_capture.get(3), video_capture.get(4), video_capture.get(5)))
 
-    while not Global.is_exit:
-        # If it's time to read a frame
-        if Global.buff_num != next_id(Global.read_num, worker_num):
-            # Grab a single frame of video
-            ret, frame = video_capture.read()
-            read_frame_list[Global.buff_num] = frame
-            Global.buff_num = next_id(Global.buff_num, worker_num)
-        else:
-            time.sleep(0.01)
+    encodings = []
+    names = []
 
-    # Release webcam
-    video_capture.release()
+    # Create arrays of known face encodings and their names
+    train_dir = os.listdir('./stored/')
+    for person in train_dir:
+        pix = os.listdir("./stored/" + person)
 
+        # Loop through each training image for the current person
+        for person_img in pix:
+            # Get the face encodings for the face in each image file
+            face = face_recognition.load_image_file("./stored/" + person + "/" + person_img)
+            face_bounding_boxes = face_recognition.face_locations(face)
 
-def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
-    known_face_encodings = Global.known_face_encodings
-    known_face_names = Global.known_face_names
-    while not Global.is_exit:
-
-        while Global.read_num != worker_id or Global.read_num != prev_id(Global.buff_num, worker_num):
-            if Global.is_exit:
-                break
-
-            time.sleep(0.01)
-
-        time.sleep(Global.frame_delay)
-        frame_process = read_frame_list[worker_id]
-
-        Global.read_num = next_id(Global.read_num, worker_num)
-        rgb_frame = frame_process[:, :, ::-1]
-
-        face_locations = face_recognition.face_locations(rgb_frame)
-        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
-
-        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-
-            name = "Unknown"
-
-            if True in matches:
-                first_match_index = matches.index(True)
-                name = known_face_names[first_match_index]
-
-            cv2.rectangle(frame_process, (left, top), (right, bottom), (0, 0, 255), 2)
-
-            cv2.rectangle(frame_process, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame_process, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-
-        while Global.write_num != worker_id:
-            time.sleep(0.01)
-
-        write_frame_list[worker_id] = frame_process
-
-        Global.write_num = next_id(Global.write_num, worker_num)
-
-
-if __name__ == '__main__':
-
-    if platform.system() == 'Darwin':
-        set_start_method('forkserver')
-
-    Global = Manager().Namespace()
-    Global.buff_num = 1
-    Global.read_num = 1
-    Global.write_num = 1
-    Global.frame_delay = 0
-    Global.is_exit = False
-    read_frame_list = Manager().dict()
-    write_frame_list = Manager().dict()
-
-    if cpu_count() > 2:
-        worker_num = cpu_count() - 1
-    else:
-        worker_num = 2
-
-    p = []
-
-    p.append(threading.Thread(target=capture, args=(read_frame_list, Global, worker_num,)))
-    p[0].start()
-
-    Global.known_face_encodings = [
-
-    ]
-    Global.known_face_names = [
-
-    ]
-
-    for worker_id in range(1, worker_num + 1):
-        p.append(Process(target=process, args=(worker_id, read_frame_list, write_frame_list, Global, worker_num,)))
-        p[worker_id].start()
-
-    last_num = 1
-    fps_list = []
-    tmp_time = time.time()
-    while not Global.is_exit:
-        while Global.write_num != last_num:
-            last_num = int(Global.write_num)
-
-            delay = time.time() - tmp_time
-            tmp_time = time.time()
-            fps_list.append(delay)
-            if len(fps_list) > 5 * worker_num:
-                fps_list.pop(0)
-            fps = len(fps_list) / numpy.sum(fps_list)
-            print("fps: %.2f" % fps)
-
-            if fps < 6:
-                Global.frame_delay = (1 / fps) * 0.75
-            elif fps < 20:
-                Global.frame_delay = (1 / fps) * 0.5
-            elif fps < 30:
-                Global.frame_delay = (1 / fps) * 0.25
+            # If training image contains exactly one face
+            if len(face_bounding_boxes) == 1:
+                face_enc = face_recognition.face_encodings(face)[0]
+                # Add face encoding for current image with corresponding label (name) to the training data
+                encodings.append(face_enc)
+                names.append(person)
             else:
-                Global.frame_delay = 0
+                print(person + "/" + person_img + " was skipped and can't be used for training")
 
-            cv2.imshow('Video', write_frame_list[prev_id(Global.write_num, worker_num)])
+    # Initialize some variables
+    face_locations = []
+    face_encodings = []
+    face_names = []
+    process_this_frame = True
 
+
+    while True:
+        # Grab a single frame of video
+        ret, frame = video_capture.read()
+
+        # Resize frame of video to 1/4 size for faster face recognition processing
+        small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+
+        # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
+        rgb_small_frame = small_frame[:, :, ::-1]
+
+        # Only process every other frame of video to save time
+        if process_this_frame:
+            # Find all the faces and face encodings in the current frame of video
+            face_locations = face_recognition.face_locations(rgb_small_frame)
+            face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+
+            face_names = []
+            for face_encoding in face_encodings:
+                # See if the face is a match for the known face(s)
+                matches = face_recognition.compare_faces(encodings, face_encoding)
+                name = "Unknown"
+
+                # # If a match was found in known_face_encodings, just use the first one.
+                # if True in matches:
+                #     first_match_index = matches.index(True)
+                #     name = known_face_names[first_match_index]
+
+                # Or instead, use the known face with the smallest distance to the new face
+                face_distances = face_recognition.face_distance(encodings, face_encoding)
+                best_match_index = np.argmin(face_distances)
+                if matches[best_match_index]:
+                    name = names[best_match_index]
+
+                face_names.append(name)
+
+        process_this_frame = not process_this_frame
+
+
+        # Display the results
+        for (top, right, bottom, left), name in zip(face_locations, face_names):
+            # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+            top *= 4
+            right *= 4
+            bottom *= 4
+            left *= 4
+
+            # Draw a box around the face
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+
+            # Draw a label with a name below the face
+            cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+            font = cv2.FONT_HERSHEY_DUPLEX
+            cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+
+        # Display the resulting image
+        cv2.imshow('Video', frame)
+
+        # Hit 'q' on the keyboard to quit!
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            Global.is_exit = True
             break
 
-        time.sleep(0.01)
-
-    # Quit
+    # Release handle to the webcam
+    video_capture.release()
     cv2.destroyAllWindows()

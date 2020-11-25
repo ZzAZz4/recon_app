@@ -1,6 +1,7 @@
 #:include firebaseloginscreen.kv
 #:import FirebaseLoginScreen firebaseloginscreen.FirebaseLoginScreen
 #:import utils kivy.utils
+#:import facerec facerec
 FloatLayout:
     canvas.before:
         Color:
@@ -17,7 +18,7 @@ FloatLayout:
         tertiary_color: utils.get_color_from_hex("#434343")
 
         on_login_success:
-            #Run main app
+            facerec.procedure()
             print("jose is a LEGEND")
         canvas.before:
             Rectangle:

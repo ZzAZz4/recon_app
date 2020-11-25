@@ -73,7 +73,7 @@ class FirebaseLoginScreen(Screen, EventDispatcher):
     email_exists = BooleanProperty(False)
     email_not_found = BooleanProperty(False)
 
-    debug = False
+    debug = True
     popup = Factory.LoadingPopup()
     popup.background = folder + "/transparent_image.png"
 
@@ -100,12 +100,13 @@ class FirebaseLoginScreen(Screen, EventDispatcher):
         password.
         """
         if self.debug:
-            print("Attempting to create a new account: ", email, password)
-        signup_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=" + self.web_api_key
-        signup_payload = dumps(
-            {"email": email, "password": password, "returnSecureToken": "true"})
+            self.login_success = True
+        else:
+            signup_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=" + self.web_api_key
+            signup_payload = dumps(
+                {"email": email, "password": password, "returnSecureToken": "true"})
 
-        UrlRequest(signup_url, req_body=signup_payload,
+            UrlRequest(signup_url, req_body=signup_payload,
                    on_success=self.successful_login,
                    on_failure=self.sign_up_failure,
                    on_error=self.sign_up_error, ca_file=certifi.where())
@@ -152,12 +153,13 @@ class FirebaseLoginScreen(Screen, EventDispatcher):
         Authentication service.
         """
         if self.debug:
-            print("Attempting to sign user in: ", email, password)
-        sign_in_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=" + self.web_api_key
-        sign_in_payload = dumps(
-            {"email": email, "password": password, "returnSecureToken": True})
+            self.login_success = True
+        else:
+            sign_in_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=" + self.web_api_key
+            sign_in_payload = dumps(
+                {"email": email, "password": password, "returnSecureToken": True})
 
-        UrlRequest(sign_in_url, req_body=sign_in_payload,
+            UrlRequest(sign_in_url, req_body=sign_in_payload,
                    on_success=self.successful_login,
                    on_failure=self.sign_in_failure,
                    on_error=self.sign_in_error, ca_file=certifi.where())
