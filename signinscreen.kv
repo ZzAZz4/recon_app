@@ -20,6 +20,8 @@
             highlight_color1: root.parent.parent.secondary_color if root.parent else (0,0,0,1)
             highlight_color2: root.parent.parent.tertiary_color if root.parent else (0,0,0,1)
 
+"""
+Desactivar este campo, para que ya no se muestre
         ThemedInput:
             id: password
             size_hint: .9 ,.1
@@ -29,6 +31,7 @@
             bg_color: root.parent.parent.primary_color if root.parent else (0,0,0,1)
             highlight_color1: root.parent.parent.secondary_color if root.parent else (0,0,0,1)
             highlight_color2: root.parent.parent.tertiary_color if root.parent else (0,0,0,1)
+"""
 
         ThemedButton:
             text: "[u]Reset Password[/u]"
@@ -43,7 +46,6 @@
                 sign_in_button.opacity = 0
                 sign_in_button.disabled = True
                 root.parent.parent.display_loading_screen()
-
 
         ThemedButton:
             text: "[u]Sign In[/u]"

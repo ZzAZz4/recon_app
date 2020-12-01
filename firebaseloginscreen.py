@@ -77,10 +77,10 @@ class FirebaseLoginScreen(Screen, EventDispatcher):
     popup = Factory.LoadingPopup()
     popup.background = folder + "/transparent_image.png"
 
-
     def on_login_success(self, *args):
         """Overwrite this method to switch to your app's home screen.
         """
+        #Aca tendremos que mostrar la pantalla de: puede entrar a la u
         print("Logged in successfully", args)
 
     def on_web_api_key(self, *args):
