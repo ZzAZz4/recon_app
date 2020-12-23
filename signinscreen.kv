@@ -3,7 +3,7 @@
         ThemedInput:
             id: code
             size_hint: .4 ,.1
-            pos_hint: {"center_x": .5, "top": .5}
+            pos_hint: {"center_x": .5, "top": .4}
             hint_text: "Code"
             bg_color: root.parent.parent.white if root.parent else (0,0,0,1)
             highlight_color1: root.parent.parent.secondary_color if root.parent else (0,0,0,1)
@@ -12,7 +12,7 @@
         ThemedButton:
             text: "[u]Sign In[/u]"
             size_hint: .3 ,.05
-            pos_hint: {"center_x": .5, "top": .35}
+            pos_hint: {"center_x": .5, "top": .25}
             bg_color: root.parent.parent.primary_color if root.parent else (0,0,0,1)
             color: root.parent.parent.white if root.parent else (0,0,0,1)
             on_release:
