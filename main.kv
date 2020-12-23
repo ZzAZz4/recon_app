@@ -1,5 +1,5 @@
-#:include firebaseloginscreen.kv
-#:import FirebaseLoginScreen firebaseloginscreen.FirebaseLoginScreen
+#:include loginscreen.kv
+#:import Login login.Login
 #:import utils kivy.utils
 #:import facerec facerec
 FloatLayout:
@@ -9,20 +9,20 @@ FloatLayout:
         Rectangle:
             size: self.size
             pos: self.pos
-    FirebaseLoginScreen:
+    Login:
         size_hint: 1,1
         pos_hint: {"top": 1, "right": 1}
         web_api_key: "AIzaSyBm1agLPGayibuyd3az620cWtbyB_2hV88"
-        primary_color: utils.get_color_from_hex("#2ad4ee")
+        white: utils.get_color_from_hex("#ffffff")
+        primary_color: utils.get_color_from_hex("#2A89EE")
         secondary_color: utils.get_color_from_hex("#060809")
         tertiary_color: utils.get_color_from_hex("#434343")
 
         on_login_success:
-            facerec.procedure()
-            print("jose is a LEGEND")
+            print("Owner can now execute whatever they want here")
         canvas.before:
             Rectangle:
                 size: self.size
                 pos: self.pos
-                source: "Utec.png"
+                source: "Campus_UTEC_Lima.png"
 
